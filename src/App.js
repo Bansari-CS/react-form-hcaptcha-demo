@@ -1,4 +1,4 @@
-﻿import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import "./App.css";
 
 const HCAPTCHA_SITE_KEY = "6f30aabc-27d0-4c96-a862-68205d1cbaba";

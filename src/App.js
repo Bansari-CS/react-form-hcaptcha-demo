@@ -5,7 +5,7 @@ const HCAPTCHA_SITE_KEY = "6f30aabc-27d0-4c96-a862-68205d1cbaba";
 
 function App() {
   const [status, setStatus] = useState("");
-  const [captchaError, setCaptchaError] = useState("");
+  // const [captchaError, setCaptchaError] = useState("");
   const formRef = useRef(null);
 
   useEffect(() => {
@@ -28,9 +28,9 @@ function App() {
     };
   }, []);
 
-  const renderRecaptcha = () => {
+  // const renderRecaptcha = () => {
     // reCAPTCHA is temporarily disabled while hCaptcha is active.
-  };
+  // };
 
   const handleSubmit = (event) => {
     // event.preventDefault();
@@ -41,7 +41,7 @@ function App() {
     // }
 
     setStatus("Sending your message...");
-    setCaptchaError("");
+    // setCaptchaError("");
 
     if (formRef.current) {
       formRef.current.submit();

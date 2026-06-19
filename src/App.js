@@ -2,35 +2,86 @@ import { useEffect, useRef, useState } from "react";
 import "./App.css";
 
 const HCAPTCHA_SITE_KEY = "6f30aabc-27d0-4c96-a862-68205d1cbaba";
+const RECAPTCHA_SITE_KEY = "6LdjmgItAAAAABxtIsF_1mdHFwyxL7zPlGob8HN9";
 
 function App() {
   const [status, setStatus] = useState("");
-  // const [captchaError, setCaptchaError] = useState("");
+  const [captchaToken, setCaptchaToken] = useState("");
+  const [captchaError, setCaptchaError] = useState("");
   const formRef = useRef(null);
+  const recaptchaWidgetRef = useRef(null);
 
   useEffect(() => {
-    const existingScript = document.querySelector(
-      'script[src="https://hcaptcha.com/1/api.js"]'
-    );
+    const createdScripts = [];
 
-    if (existingScript) {
-      return;
-    }
+    const ensureHcaptcha = () => {
+      const existing = document.querySelector(
+        'script[src="https://hcaptcha.com/1/api.js"]'
+      );
 
-    const script = document.createElement("script");
-    script.src = "https://hcaptcha.com/1/api.js";
-    script.async = true;
-    script.defer = true;
-    document.body.appendChild(script);
+      if (!existing) {
+        const script = document.createElement("script");
+        script.src = "https://hcaptcha.com/1/api.js";
+        script.async = true;
+        script.defer = true;
+        document.body.appendChild(script);
+        createdScripts.push(script);
+      }
+    };
+
+    const renderRecaptcha = () => {
+      if (
+        window.grecaptcha &&
+        document.getElementById("recaptcha-container") &&
+        recaptchaWidgetRef.current === null
+      ) {
+        recaptchaWidgetRef.current = window.grecaptcha.render(
+          "recaptcha-container",
+          {
+            sitekey: RECAPTCHA_SITE_KEY,
+            callback: (token) => {
+              setCaptchaToken(token);
+              setCaptchaError("");
+            },
+            "expired-callback": () => {
+              setCaptchaToken("");
+            },
+          }
+        );
+      }
+    };
+
+    const ensureRecaptcha = () => {
+      const src =
+        "https://www.google.com/recaptcha/api.js?onload=onRecaptchaLoaded&render=explicit";
+      const existing = document.querySelector(`script[src="${src}"]`);
+
+      window.onRecaptchaLoaded = renderRecaptcha;
+
+      if (!existing) {
+        const script = document.createElement("script");
+        script.src = src;
+        script.async = true;
+        script.defer = true;
+        document.body.appendChild(script);
+        createdScripts.push(script);
+      } else {
+        renderRecaptcha();
+      }
+    };
+
+    ensureHcaptcha();
+    ensureRecaptcha();
 
     return () => {
-      document.body.removeChild(script);
+      createdScripts.forEach((script) => {
+        if (script.parentNode) {
+          script.parentNode.removeChild(script);
+        }
+      });
+      delete window.onRecaptchaLoaded;
     };
   }, []);
-
-  // const renderRecaptcha = () => {
-    // reCAPTCHA is temporarily disabled while hCaptcha is active.
-  // };
 
   const handleSubmit = (event) => {
     // event.preventDefault();
@@ -41,7 +92,7 @@ function App() {
     // }
 
     setStatus("Sending your message...");
-    // setCaptchaError("");
+    setCaptchaError("");
 
     if (formRef.current) {
       formRef.current.submit();
@@ -63,7 +114,7 @@ function App() {
           <form
             ref={formRef}
             className="form-body"
-            action="https://staging.formbridge.ai/api/forms/6a1d6d555a6e37de3c0b1877"
+            action="http://localhost:3001/api/forms/6a16f9c6a80aedb05140fcb4"
             method="POST"
             onSubmit={handleSubmit}
           >
@@ -106,18 +157,14 @@ function App() {
               data-sitekey={HCAPTCHA_SITE_KEY}
             ></div>
 
-            {/* reCAPTCHA temporarily disabled */}
-            {/* {false && (
-              <>
-                <div id="recaptcha-container" className="recaptcha-wrapper" />
-                <input
-                  type="hidden"
-                  name="g-recaptcha-response"
-                  value={captchaToken}
-                />
-                {captchaError && <div className="form-error">{captchaError}</div>}
-              </>
-            )} */}
+            {/* reCAPTCHA */}
+            <div id="recaptcha-container" className="recaptcha-wrapper" />
+            <input
+              type="hidden"
+              name="g-recaptcha-response"
+              value={captchaToken}
+            />
+            {captchaError && <div className="form-error">{captchaError}</div>}
 
             <button type="submit">Submit</button>
           </form>
